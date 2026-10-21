@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Internship Tracker</title>
+<style>
+  :root {
+    --bg: #f7f7f8;
+    --surface: #ffffff;
+    --text: #1a1a1e;
+    --muted: #5d5d66;
+    --border: #e2e2e7;
+    --accent: #2f5bd3;
+    --accent-text: #ffffff;
+    --pill-bg: #eef0f5;
+    --pill-text: #3a3f4f;
+    --green-bg: #e3f4e8;
+    --green-text: #1d6b35;
+    --amber-bg: #fdf0d5;
+    --amber-text: #8a5a00;
+    --focus: #2f5bd3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121214;
+      --surface: #1c1c20;
+      --text: #ececf0;
+      --muted: #a0a0ab;
+      --border: #2e2e35;
+      --accent: #7d9bff;
+      --accent-text: #0d1020;
+      --pill-bg: #2a2c35;
+      --pill-text: #cfd3e0;
+      --green-bg: #173322;
+      --green-text: #8fd9a6;
+      --amber-bg: #3a2c0c;
+      --amber-text: #f3c56b;
+      --focus: #9db4ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { margin: 0; font-size: 1.6rem; }
+  h2 { margin: 0; font-size: 1.15rem; }
+  h3 { margin: 0 0 6px; font-size: 1rem; overflow-wrap: anywhere; }
+  .sub { margin: 4px 0 0; color: var(--muted); font-size: .92rem; }
+  .banner {
+    margin: 12px 0 0; padding: 8px 12px; border-radius: 8px;
+    background: var(--amber-bg); color: var(--amber-text); font-size: .9rem;
+  }
+  a { color: var(--accent); }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
+  .stat {
+    display: flex; flex-direction: column; padding: 12px; border-radius: 10px;
+    background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+    font-size: .85rem; text-decoration: none;
+  }
+  a.stat:hover { border-color: var(--accent); }
+  .stat .num { color: var(--text); font-size: 1.5rem; font-weight: 650; line-height: 1.2; }
+
+  .controls { display: grid; gap: 10px; margin-bottom: 20px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  button {
+    font: inherit; font-size: .88rem; color: var(--text); cursor: pointer;
+    min-height: 36px; padding: 6px 12px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border);
+  }
+  button:hover { border-color: var(--accent); }
+  button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  input[type="search"] {
+    width: 100%; font: inherit; padding: 9px 12px; border-radius: 10px;
+    background: var(--surface); color: var(--text); border: 1px solid var(--border);
+  }
+
+  .view-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  .empty {
+    padding: 28px 16px; text-align: center; color: var(--muted);
+    background: var(--surface); border: 1px dashed var(--border); border-radius: 10px;
+  }
+  .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .card { padding: 14px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); }
+  .card.skipped { opacity: .55; }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+  .pill { padding: 2px 9px; border-radius: 999px; font-size: .78rem; font-weight: 600; background: var(--pill-bg); color: var(--pill-text); }
+  .pill.green { background: var(--green-bg); color: var(--green-text); }
+  .pill.amber { background: var(--amber-bg); color: var(--amber-text); }
+  .meta { margin: 0 0 10px; color: var(--muted); font-size: .88rem; overflow-wrap: anywhere; }
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .apply {
+    display: inline-flex; align-items: center; min-height: 36px; padding: 6px 14px; margin-right: 4px;
+    border-radius: 999px; background: var(--accent); color: var(--accent-text); font-size: .88rem; font-weight: 600; text-decoration: none;
+  }
+
+  @media (max-width: 560px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Internship Tracker</h1>
+    <p class="sub">Summer 2027 · SWE, PM, IT, Cybersecurity, DevOps · open to class of 2029 or no grad-year rule</p>
+    <p class="sub" id="last-run">Last search: loading…</p>
+    <p class="banner" id="sample-banner" hidden>Showing sample data (?sample=1). These are not real postings.</p>
+  </header>
+
+  <main>
+    <section class="stats" aria-label="Summary">
+      <div class="stat"><span class="num" id="stat-today">0</span>Found today</div>
+      <a class="stat" href="#all"><span class="num" id="stat-all">0</span>All postings</a>
+      <div class="stat"><span class="num" id="stat-saved">0</span>Saved</div>
+      <div class="stat"><span class="num" id="stat-applied">0</span>Applied</div>
+    </section>
+
+    <div class="controls">
+      <div class="chips" role="group" aria-label="Filter by track" id="track-chips"></div>
+      <div class="chips" role="group" aria-label="Filter by status" id="status-chips"></div>
+      <input type="search" id="q" placeholder="Search company, title or location" aria-label="Search company, title or location">
+    </div>
+
+    <div class="view-head">
+      <h2 id="view-title" tabindex="-1">Found today</h2>
+      <a id="back" href="#" hidden>← Back to today</a>
+    </div>
+    <div id="empty" class="empty" hidden></div>
+    <ul id="list" class="list" aria-labelledby="view-title"></ul>
+  </main>
+</div>
+
+<script>
+const TRACKS = { all: 'All', swe: 'Software Eng', pm: 'Product', it: 'IT', sec: 'Cybersecurity', devops: 'DevOps' };
+const STATUSES = { review: 'To review', saved: 'Saved', applied: 'Applied', all: 'Everything' };
+const STORE_KEY = 'internship-tracker:marks';
+const SAMPLE = new URLSearchParams(location.search).get('sample') === '1';
+const $ = id => document.getElementById(id);
+
+let postings = [];
+let track = 'all';
+let status = 'review';
+let query = '';
+
+// Save/Applied/Skip live only in this browser, keyed by posting id, so the daily job never touches them.
+let marks = {};
+try { marks = JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch { marks = {}; }
+
+function toggleMark(id, mark) {
+  if (marks[id] === mark) delete marks[id]; else marks[id] = mark;
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(marks)); } catch { /* private mode: keep in memory */ }
+}
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const isYmd = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+const monthDay = ymd => new Date(ymd + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+const pacificDay = date => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(date);
+const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : null;
+
+async function getJson(path) {
+  const res = await fetch(`${path}?v=${Date.now()}`, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+  const data = await res.json();
+  if (!Array.isArray(data)) throw new Error(`${path}: expected an array`);
+  return data;
+}
+
+function chips(el, options, current, onPick) {
+  el.innerHTML = Object.entries(options)
+    .map(([key, label]) => `<button type="button" data-key="${key}" aria-pressed="${key === current}">${label}</button>`)
+    .join('');
+  el.onclick = e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    onPick(b.dataset.key);
+    chips(el, options, b.dataset.key, onPick);
+    el.querySelector(`[data-key="${b.dataset.key}"]`).focus();
+    render();
+  };
+}
+
+function card(p, view) {
+  const mark = marks[p.id];
+  const url = safeUrl(p.url);
+  const meta = [
+    esc(p.location || 'Location not listed'),
+    isYmd(p.postedDate) ? `Posted ${p.postedApprox ? '~' : ''}${monthDay(p.postedDate)}` : 'Posted date not listed',
+    p.deadline ? `Deadline ${esc(isYmd(p.deadline) ? monthDay(p.deadline) : p.deadline)}` : '',
+    view === 'all' && isYmd(p.firstSeen) ? `Found ${monthDay(p.firstSeen)}` : '',
+  ].filter(Boolean).join(' · ');
+  const btn = (m, label) =>
+    `<button type="button" data-id="${esc(p.id)}" data-mark="${m}" aria-pressed="${mark === m}">${label}</button>`;
+  return `<li class="card${mark === 'skipped' ? ' skipped' : ''}">
+    <h3>${esc(p.company)} — ${esc(p.title)}</h3>
+    <div class="pills">
+      <span class="pill">${esc(TRACKS[p.track] || p.track)}</span>
+      <span class="pill ${p.eligibility === 'check' ? 'amber' : 'green'}">${esc(p.gradReq || 'Grad rule not listed')}</span>
+    </div>
+    <p class="meta">${meta}</p>
+    <div class="actions">
+      ${url ? `<a class="apply" href="${esc(url)}" target="_blank" rel="noopener noreferrer" aria-label="Apply to ${esc(p.company)}, ${esc(p.title)} (opens in new tab)">Apply ↗</a>` : ''}
+      ${btn('saved', 'Save')}${btn('applied', 'Applied')}${btn('skipped', 'Skip')}
+    </div>
+  </li>`;
+}
+
+function render() {
+  const view = location.hash === '#all' ? 'all' : 'today';
+  const today = pacificDay(new Date());
+  const open = postings
+    .filter(p => !p.closed)
+    .sort((a, b) => String(b.firstSeenAt || '').localeCompare(String(a.firstSeenAt || '')));
+  const todays = open.filter(p => p.firstSeen === today);
+
+  $('stat-today').textContent = todays.length;
+  $('stat-all').textContent = open.filter(p => marks[p.id] !== 'skipped').length;
+  $('stat-saved').textContent = postings.filter(p => marks[p.id] === 'saved').length;
+  $('stat-applied').textContent = postings.filter(p => marks[p.id] === 'applied').length;
+
+  $('view-title').textContent = view === 'all' ? 'All open postings' : 'Found today';
+  $('back').hidden = view !== 'all';
+
+  const base = view === 'all' ? open : todays;
+  // Skipped postings have no 'review' mark, so they only show under "Everything" (dimmed).
+  const shown = base.filter(p =>
+    (track === 'all' || p.track === track) &&
+    (status === 'all' || (marks[p.id] || 'review') === status) &&
+    (!query || `${p.company} ${p.title} ${p.location}`.toLowerCase().includes(query)));
+
+  $('list').innerHTML = shown.map(p => card(p, view)).join('');
+  let empty = '';
+  if (!postings.length) empty = 'No postings yet. The daily search adds new ones each morning around 7:50 AM PT.';
+  else if (!base.length && view === 'today') empty = 'Nothing new found today. <a href="#all">See all open postings</a>.';
+  else if (!base.length) empty = 'No open postings right now. Check back after the next daily search.';
+  else if (!shown.length && status === 'review' && track === 'all' && !query) empty = 'You’ve reviewed everything here. Try Saved, Applied or Everything.';
+  else if (!shown.length) empty = 'No postings match these filters.';
+  $('empty').innerHTML = empty;
+  $('empty').hidden = !empty;
+}
+
+$('list').addEventListener('click', e => {
+  const b = e.target.closest('button[data-mark]');
+  if (!b) return;
+  const { id, mark } = b.dataset;
+  toggleMark(id, mark);
+  render();
+  // Keep keyboard focus sensible when the card stays or disappears after re-render.
+  const again = [...$('list').querySelectorAll('button[data-mark]')].find(x => x.dataset.id === id && x.dataset.mark === mark);
+  (again || $('view-title')).focus();
+});
+
+$('q').addEventListener('input', e => { query = e.target.value.trim().toLowerCase(); render(); });
+addEventListener('hashchange', render);
+chips($('track-chips'), TRACKS, track, k => { track = k; });
+chips($('status-chips'), STATUSES, status, k => { status = k; });
+$('sample-banner').hidden = !SAMPLE;
+
+Promise.all([
+  getJson(SAMPLE ? 'data/sample-postings.json' : 'data/postings.json'),
+  getJson('data/runs.json').catch(() => []),
+]).then(([p, runs]) => {
+  postings = p;
+  const last = runs.reduce((a, r) => (!a || Date.parse(r.at) > Date.parse(a.at) ? r : a), null);
+  $('last-run').textContent = last
+    ? `Last search: ${new Date(last.at).toLocaleString('en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} PT · ${last.newCount ?? 0} new`
+    : 'Last search: not run yet';
+  render();
+}).catch(err => {
+  $('last-run').textContent = 'Last search: unavailable';
+  $('empty').textContent = `Couldn’t load postings (${err.message}). Try reloading.`;
+  $('empty').hidden = false;
+});
+</script>
+</body>
+</html>
